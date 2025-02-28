@@ -1,0 +1,75 @@
+# Install necessary libraries (if not already installed) 
+!pip install soundfile simpleaudio librosa scipy 
+# Import necessary libraries 
+import numpy as np 
+import matplotlib.pyplot as plt 
+import soundfile as sf 
+import simpleaudio as sa 
+import librosa 
+import librosa.display 
+# Load the speech file 
+filename = "/content/LJ001-0001.wav"  # Ensure this path is correct 
+signal, sample_rate = librosa.load(filename, sr=None) 
+# Display basic information 
+num_samples = len(signal) 
+duration = num_samples / sample_rate 
+print(f"Sample Rate: {sample_rate} Hz") 
+print(f"Number of Samples: {num_samples}") 
+print(f"Duration: {duration:.2f} seconds") 
+# Plot the original waveform 
+plt.figure(figsize=(10, 4)) 
+librosa.display.waveshow(signal, sr=sample_rate) 
+plt.title("Original Speech Signal") 
+plt.xlabel("Time (seconds)") 
+plt.ylabel("Amplitude") 
+plt.show() 
+# Slicing first 2 seconds 
+sliced_signal = signal[:int(2 * sample_rate)] 
+plt.figure(figsize=(10, 4)) 
+librosa.display.waveshow(sliced_signal, sr=sample_rate) 
+plt.title("Sliced Signal (First 2 sec)") 
+plt.xlabel("Time (seconds)") 
+plt.ylabel("Amplitude") 
+plt.show() 
+# Normalization 
+normalized_signal = signal / np.max(np.abs(signal)) 
+plt.figure(figsize=(10, 4)) 
+librosa.display.waveshow(normalized_signal, sr=sample_rate) 
+plt.title("Normalized Signal") 
+plt.xlabel("Time (seconds)") 
+plt.ylabel("Amplitude") 
+plt.show() 
+# Amplification 
+amplified_signal = 2 * signal 
+plt.figure(figsize=(10, 4)) 
+librosa.display.waveshow(amplified_signal, sr=sample_rate) 
+plt.title("Amplified Signal") 
+plt.xlabel("Time (seconds)") 
+plt.ylabel("Amplitude") 
+plt.show() 
+# De-amplification 
+deamplified_signal = 0.5 * signal 
+plt.figure(figsize=(10, 4)) 
+librosa.display.waveshow(deamplified_signal, sr=sample_rate) 
+plt.title("De-amplified Signal") 
+plt.xlabel("Time (seconds)") 
+plt.ylabel("Amplitude") 
+plt.show() 
+# Up-sampling (increasing sample rate by factor of 2) 
+upsampled_signal = librosa.resample(y=signal, orig_sr=sample_rate, 
+target_sr=sample_rate * 2) 
+plt.figure(figsize=(10, 4)) 
+librosa.display.waveshow(upsampled_signal, sr=sample_rate * 2) 
+plt.title("Up-sampled Signal") 
+plt.xlabel("Time (seconds)") 
+plt.ylabel("Amplitude") 
+plt.show() 
+# Down-sampling (decreasing sample rate by factor of 2) 
+downsampled_signal = librosa.resample(y=signal, orig_sr=sample_rate, 
+target_sr=sample_rate // 2) 
+plt.figure(figsize=(10, 4)) 
+librosa.display.waveshow(downsampled_signal, sr=sample_rate // 2) 
+plt.title("Down-sampled Signal") 
+plt.xlabel("Time (seconds)") 
+plt.ylabel("Amplitude") 
+plt.show() 
