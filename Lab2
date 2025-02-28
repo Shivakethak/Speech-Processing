@@ -1,0 +1,54 @@
+import torchaudio
+import torchaudio.transforms as T
+import librosa
+import librosa.display
+import matplotlib.pyplot as plt
+import torch
+import numpy as np
+from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+
+#1:Load Speech Signal
+speech_file = "/content/LJ001-0001.wav"  # Replace with an actual file path
+waveform, sample_rate = torchaudio.load(speech_file)
+
+# 2: Preprocess the Audio (Convert to Mono, Resample to 16kHz)
+if waveform.shape[0] > 1:
+    waveform = torch.mean(waveform, dim=0, keepdim=True)  # Convert to Mono
+resampler = T.Resample(orig_freq=sample_rate, new_freq=16000)
+waveform = resampler(waveform)
+sample_rate = 16000
+
+# 3: Load Wav2Vec2 Model for Phoneme Recognition
+processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
+model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-base-960h")
+
+# Convert waveform to input tensor
+input_values = processor(waveform.squeeze().numpy(), return_tensors="pt", sampling_rate=16000).input_values
+with torch.no_grad():
+    logits = model(input_values).logits
+
+# Decode Phonemes
+predicted_ids = torch.argmax(logits, dim=-1)
+transcription = processor.batch_decode(predicted_ids)[0]
+print("Recognized Phonemes:", transcription)
+
+#  4: Visualize Full Waveform to Identify Phoneme Time Intervals
+plt.figure(figsize=(10, 4))
+librosa.display.waveshow(waveform.squeeze().numpy(), sr=16000)
+plt.title("Full Speech Signal - Identify Phoneme Timing")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.show()
+
+# 5: Extract a Phoneme Segment (Adjust Start and End Time)
+start_time, end_time = 0.5, 0.7  # we should adjust Adjust based on identified phoneme timestamps
+start_sample, end_sample = int(start_time * 16000), int(end_time * 16000)
+extracted_phoneme = waveform[:, start_sample:end_sample]
+
+#  6: Visualize the Extracted Phoneme
+plt.figure(figsize=(10, 4))
+librosa.display.waveshow(extracted_phoneme.squeeze().numpy(), sr=16000)
+plt.title(f"Extracted Phoneme from {start_time}s to {end_time}s")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.show()
