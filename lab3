@@ -1,0 +1,108 @@
+import librosa
+import librosa.display
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Loading a speech waveform (Example: From LJ Speech dataset or any .wav file)
+file_path = '/content/LJ001-0061.wav'  # Replace with actual file path
+y, sr = librosa.load(file_path, sr=None)
+
+# Experiment 1(A): Fourier Transform (FT)
+
+# Computing Fourier Transform
+fft_spectrum = np.fft.fft(y)
+freqs = np.fft.fftfreq(len(fft_spectrum), 1/sr)
+
+# Plotting Time-Domain and Frequency-Domain representations
+plt.figure(figsize=(12, 6))
+plt.subplot(2, 1, 1)
+plt.plot(np.arange(len(y)) / sr, y)
+plt.title('Experiment 1(A): Time-Domain Representation')
+plt.xlabel('Time (s)')
+plt.ylabel('Amplitude')
+
+plt.subplot(2, 1, 2)
+plt.plot(freqs[:len(freqs)//2], np.abs(fft_spectrum[:len(freqs)//2]))
+plt.title('Experiment 1(A): Frequency-Domain Representation (Fourier Transform)')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Magnitude')
+plt.show()
+
+# Experiment 1(B): Short-Time Fourier Transform (STFT)
+
+# Computing STFT
+stft_result = librosa.stft(y)
+db_stft = librosa.amplitude_to_db(np.abs(stft_result))
+
+# Plotting Spectrogram
+plt.figure(figsize=(10, 6))
+librosa.display.specshow(db_stft, sr=sr, x_axis='time', y_axis='log', cmap='coolwarm')
+plt.colorbar(label='Decibels (dB)')
+plt.title('Experiment 1(B): STFT Spectrogram')
+plt.show()
+
+# Experiment 2: Energy Distribution in Vowels and Consonants
+
+
+# Extracting a phoneme segment (Example: Selecting a 0.5s segment starting at 1.0s)
+start_time = 1.0  # Start time in seconds
+end_time = 1.5  # End time in seconds
+start_sample = int(start_time * sr)
+end_sample = int(end_time * sr)
+phoneme_segment = y[start_sample:end_sample]
+
+# Plotting Phoneme Waveform
+plt.figure(figsize=(8, 4))
+t = np.linspace(start_time, end_time, len(phoneme_segment))
+plt.plot(t, phoneme_segment)
+plt.title('Experiment 2: Phoneme Waveform')
+plt.xlabel('Time (s)')
+plt.ylabel('Amplitude')
+plt.show()
+
+# Computing STFT of Phoneme Segment
+phoneme_stft = librosa.stft(phoneme_segment)
+phoneme_db_stft = librosa.amplitude_to_db(np.abs(phoneme_stft))
+
+# Plotting Phoneme Spectrogram
+plt.figure(figsize=(10, 6))
+librosa.display.specshow(phoneme_db_stft, sr=sr, x_axis='time', y_axis='log', cmap='coolwarm')
+plt.colorbar(label='Decibels (dB)')
+plt.title('Experiment 2: Phoneme Spectrogram')
+plt.show()
+
+# Defining frequency ranges
+low_freq_range = (300, 3000)  # Vowel range
+high_freq_range = (4000, 8000)  # Fricatives range
+
+# Computing Energy in Different Bands
+def compute_band_energy(stft_data, freqs, band):
+    idx = np.where((freqs >= band[0]) & (freqs <= band[1]))[0]
+    return np.sum(np.abs(stft_data[idx, :])**2)
+
+freqs_stft = librosa.fft_frequencies(sr=sr)
+vowel_energy = compute_band_energy(stft_result, freqs_stft, low_freq_range)
+consonant_energy = compute_band_energy(stft_result, freqs_stft, high_freq_range)
+energy_ratio = vowel_energy / consonant_energy
+
+# Output Energy Results
+print("\n=== Experiment 2: Energy Distribution in Vowels and Consonants ===\n")
+print(f'Vowel Energy: {vowel_energy:.2f}\n')
+print(f'Consonant Energy: {consonant_energy:.2f}\n')
+print(f'Energy Ratio (Vowels/Consonants): {energy_ratio:.2f}\n')
+print("Vowels have higher energy in the low-frequency range, while consonants (especially fricatives) exhibit energy in higher frequencies.\n")
+
+# Visualizing Energy Distribution
+
+# Plotting Spectrogram with Marked Vowel & Consonant Ranges
+plt.figure(figsize=(10, 6))
+librosa.display.specshow(db_stft, sr=sr, x_axis='time', y_axis='log', cmap='coolwarm')
+plt.colorbar(label='Decibels (dB)')
+plt.title('Experiment 2: STFT Spectrogram with Vowel & Consonant Regions')
+plt.axhline(y=low_freq_range[0], color='green', linestyle='--', label='Vowel Range (300-3000 Hz)')
+plt.axhline(y=low_freq_range[1], color='green', linestyle='--')
+plt.axhline(y=high_freq_range[0], color='red', linestyle='--', label='Consonant Range (4000-8000 Hz)')
+plt.axhline(y=high_freq_range[1], color='red', linestyle='--')
+plt.legend()
+plt.show()
+
